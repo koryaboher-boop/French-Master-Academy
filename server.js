@@ -128,8 +128,8 @@ function createServer(port) {
       console.log('\n' + '='.repeat(66));
       console.log('   🚀  أكاديمية إتقان الفرنسية — تعمل الآن على جهازك (V1.0)');
       console.log('='.repeat(66));
-      console.log('   📌 المحتوى: 6 مستويات (A0→C1) · 86 درساً · 235+ فيديو');
-      console.log('   📝 540 تمرينًا تفاعليًا · 554 مفردة مع مراجعة ذكية');
+      console.log('   📌 المحتوى: 6 مستويات (A0→C1) · 61 مساراً · 225 درساً · 582 فيديو موثّق');
+      console.log('   📝 1800 تمرينًا تفاعليًا · 2934 مفردة وبطاقة مع مراجعة ذكية');
       console.log('-'.repeat(66));
       console.log(`\n   💻 [1] رابط هذا الجهاز:\n       👉  ${localUrl}\n`);
       if (netAddrs.length > 0) {

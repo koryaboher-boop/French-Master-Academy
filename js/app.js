@@ -55,8 +55,22 @@ const P = {
   sun: '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>',
   moon: '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
 };
-const ic = (n, s) => '<svg class="ic" width="' + (s || 16) + '" height="' + (s || 16) +
-  '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (P[n] || '') + '</svg>';
+const ICON_ALIAS = {
+  pen: 'edit',
+  users: 'user',
+  '📖': 'book',
+  '📚': 'layers',
+  '✏️': 'edit',
+  '🗣️': 'chat',
+  '🎧': 'headphones',
+  '✒️': 'edit',
+  '💼': 'briefcase'
+};
+const ic = (n, s) => {
+  const key = ICON_ALIAS[n] || n;
+  return '<svg class="ic" width="' + (s || 16) + '" height="' + (s || 16) +
+    '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (P[key] || '') + '</svg>';
+};
 
 /* ---------- helpers ---------- */
 function shade(hex, pct) {
@@ -615,6 +629,7 @@ function viewPlacement() {
   if (PL && PL.bank && PL.finished) { /* keep result until re-enter */ }
   const bank = buildPlacementBank();
   if (!bank.length) return '<div class="card soon-banner">لا توجد أسئلة كافية</div>';
+  EXQ = null;
   PL = { bank: bank, i: 0, sel: null, confirmed: false, correct: 0, byLevel: {}, finished: false };
   return '<section class="lesson-header"><h1 style="margin:6px 0 2px">اختبار تحديد المستوى</h1>' +
     '<p style="margin:0;color:var(--muted);font-size:13px">' + bank.length + ' سؤالاً سريعاً من كل المستويات — أجب دون تردد طويل، النتيجة تقترح عليك نقطة البداية المناسبة.</p></section>' +
@@ -633,7 +648,7 @@ function plQuestion() {
     return '<button class="' + cls + '" data-opt="' + j + '" ' + (PL.confirmed ? 'disabled' : '') + '><span class="ol">' + ['أ', 'ب', 'ج', 'د'][j] + '</span><span>' + esc(o) + '</span></button>';
   }).join('');
   const spoken = q.spoken
-    ? '<button class="speak-btn speak-big" data-pl-speak="' + esc(q.spoken) + '">' + ic('volume', 18) + ' استمع</button>'
+    ? '<button class="speak-btn speak-big" id="exSpeak" data-pl-speak="' + esc(q.spoken) + '">' + ic('volume', 18) + ' استمع</button>'
     : '';
   const lvTag = '<span class="chip chip-mini" style="opacity:.75">سؤال من مستوى ' + q.lvCode + '</span>';
   const action = !PL.confirmed
@@ -669,7 +684,20 @@ function plResult() {
    ============================================================ */
 let EXQ = null;
 const EX_TYPE_AR = { mcq: 'اختيار من متعدد', fill: 'املأ الفراغ', order: 'رتّب الجملة', translate: 'ترجم', listen: 'استماع', correct: 'صحّح الخطأ', writing: 'كتابة حرة', speaking: 'تكرار نطق' };
-const SKILL_AR = { grammar: 'قواعد', vocabulary: 'مفردات', reading: 'قراءة', listening: 'استماع', writing: 'كتابة', speaking: 'محادثة', pronunciation: 'نطق' };
+const SKILL_AR = {
+  grammar: 'قواعد',
+  vocabulary: 'مفردات',
+  vocab: 'مفردات',
+  reading: 'قراءة',
+  listening: 'استماع',
+  writing: 'كتابة',
+  speaking: 'محادثة',
+  pronunciation: 'نطق',
+  culture: 'ثقافة',
+  conversation: 'محادثة',
+  argumentation: 'حجاج ونقاش',
+  analysis: 'تحليل'
+};
 
 function viewEx(id) {
   const r = lessonById(id);
@@ -694,7 +722,7 @@ function exHead(q) {
   const pct = Math.round(EXQ.i / total * 100);
   return '<div class="quiz-top"><span class="qnum">' + (EXQ.i + 1) + ' / ' + total + '</span>' +
     '<span class="chip chip-mini">' + EX_TYPE_AR[q.t] + '</span>' +
-    (q.skill ? '<span class="chip chip-mini chip-skill">' + SKILL_AR[q.skill] + '</span>' : '') +
+    (q.skill ? '<span class="chip chip-mini chip-skill">' + esc(SKILL_AR[q.skill] || q.skill) + '</span>' : '') +
     '<span class="qbar">' + bar(pct) + '</span></div>';
 }
 function frStemHTML(q) {
@@ -1010,7 +1038,7 @@ function viewSettings() {
     '<div class="set-row"><span class="si">' + ic('rotate', 17) + '</span><span class="sm"><b>إعادة تعيين التقدّم</b><small>مسح كل الدروس المكتملة والدرجات والبطاقات — لا يمكن الرجوع</small></span><button class="btn btn-ghost" id="setReset" style="min-height:38px;padding:7px 14px;font-size:12.5px">مسح</button></div>' +
     '</div></div>' +
     '<div class="sec"><div class="card set-group">' +
-    '<div class="set-row"><span class="si">' + ic('info', 17) + '</span><span class="sm"><b>عن التطبيق</b><small>«أكاديمية إتقان الفرنسية» — نسخة ويب مستقلة تعمل دون إنترنت (باستثناء الفيديوهات المدمجة من يوتيوب مع توثيق مصادرها داخل كل درس). ' + g.total + ' درسًا · ' + g.ex + ' تمرينًا · ' + g.vocab + ' مفردة · 47 مساراً في 6 مستويات.</small></span></div>' +
+    '<div class="set-row"><span class="si">' + ic('info', 17) + '</span><span class="sm"><b>عن التطبيق</b><small>«أكاديمية إتقان الفرنسية» — نسخة ويب مستقلة تعمل دون إنترنت (باستثناء الفيديوهات المدمجة من يوتيوب مع توثيق مصادرها داخل كل درس). ' + g.total + ' درسًا · ' + g.ex + ' تمرينًا · ' + g.vocab + ' مفردة · ' + LEVELS.reduce((a, lv) => a + lv.tracks.length, 0) + ' مساراً في 6 مستويات.</small></span></div>' +
     '<div class="set-row"><span class="si" style="font-family:Georgia,serif;font-weight:700;color:var(--primary)">Fr</span><span class="sm"><b>الإصدار 1.0 (Static)</b><small>Vanilla JS · localStorage · PWA · بيانات مدمجة v' + (DATA.version || 1) + ' (' + esc(DATA.generated || '') + ')</small></span></div>' +
     '</div></div>';
 }

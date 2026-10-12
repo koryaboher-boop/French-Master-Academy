@@ -12,7 +12,7 @@ if %errorlevel%==0 goto :run
 
 echo [i] Node.js not found - opening index.html directly in your browser...
 echo     (The app works fully this way! Node is only needed for the Wi-Fi/hotspot feature.)
-start "" "" "%~dp0index.html"
+start "" "%~dp0index.html"
 exit /b
 
 :run
