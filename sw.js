@@ -1,7 +1,7 @@
 /* French Master Academy — Service Worker (النسخة الثابتة المستقلة)
    الاستراتيجية: كاش-أولاً لكل ملفات التطبيق (تعمل دون إنترنت بالكامل)
    الفيديوهات (يوتيوب/ytimg) تتجاوز الكاش دائماً */
-const CACHE = 'fma-static-v12';
+const CACHE = 'fma-static-v17';
 const ASSETS = [
   './',
   './index.html',
