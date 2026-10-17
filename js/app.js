@@ -465,9 +465,7 @@ function videoPlayerHTML(v, idx, mode) {
   if (!id) return '';
   const isMain = mode === 'main' || v.main === true;
   const isExtra = mode === 'extra';
-  const stage = online
-    ? '<img class="vp-thumb" alt="" loading="lazy" src="https://i.ytimg.com/vi/' + id + '/hqdefault.jpg" onerror="this.style.display=\'none\'"/>'
-    : '<div class="vp-offline"><span class="orn">✻</span><b>لا يوجد اتصال بالإنترنت</b><small>الفيديو يعمل عند توفر الاتصال — وباقي أقسام الدرس تعمل دون اتصال</small></div>';
+  const stage = '<img class="vp-thumb" alt="" loading="lazy" src="https://i.ytimg.com/vi/' + id + '/hqdefault.jpg" onerror="this.style.opacity=0.4"/>';
   const badge = isMain
     ? '<span class="vp-badge vp-badge-main">★ الفيديو الأساسي</span>'
     : (isExtra ? '<span class="vp-badge vp-badge-extra">مكمّل</span>' : '');
@@ -496,14 +494,22 @@ function vpInject(vp, autoplay) {
 }
 
 /* ---------- view: lesson ---------- */
+function dialoguesSec(l) {
+  return ['dialogues', 'حوارات', 'chat', l.dialogues.map((d) => '<div class="dlg-card"><h4>' + esc(d.title) + '</h4>' + (d.ctx ? '<p class="dlg-ctx">' + esc(d.ctx) + '</p>' : '') +
+    '<div class="dlg-lines">' + d.lines.map((ln) => '<div class="dlg-line"><b class="dlg-who">' + esc(ln.who) + '</b><div class="dlg-body">' + frTxt(ln.fr) + '<button class="speak-btn" data-speak="' + esc(ln.fr) + '">' + ic('volume', 12) + '</button><small>' + esc(ln.ar) + '</small></div></div>').join('') + '</div></div>').join('')];
+}
 function lessonSections(l) {
   const secs = [];
   if (l.objectives && l.objectives.length)
     secs.push(['objectives', 'الأهداف', 'target', '<ol class="obj-list">' + l.objectives.map((o) => '<li>' + esc(o) + '</li>').join('') + '</ol>']);
+  if (l.videoAfterObjectives && l.sections && l.sections.length && l.sections[0].video)
+    secs.push(['video', 'الفيديو', 'video', videoPlayerHTML(l.sections[0].video, 0, 'main') + (l.sections[0].video.why ? '<div class="why-note">' + ic('info', 11) + ' لماذا هذا الفيديو؟ ' + esc(l.sections[0].video.why) + '</div>' : '')]);
+  if (l.dialoguesAfterObjectives && l.dialogues && l.dialogues.length)
+    secs.push(dialoguesSec(l));
   if (l.sections && l.sections.length) {
     const body = l.sections.map((s, i) => {
       let h = '<div class="sec-block' + (i ? ' sec-gap' : '') + '"><h4 class="sec-h">' + esc(s.h) + '</h4>';
-      if (s.video) h += videoPlayerHTML(s.video, i, s.video.main ? 'main' : undefined) + (s.video.why ? '<div class="why-note">' + ic('info', 11) + ' لماذا هذا الفيديو؟ ' + esc(s.video.why) + '</div>' : '');
+      if (s.video && !(i === 0 && l.videoAfterObjectives)) h += videoPlayerHTML(s.video, i, s.video.main ? 'main' : undefined) + (s.video.why ? '<div class="why-note">' + ic('info', 11) + ' لماذا هذا الفيديو؟ ' + esc(s.video.why) + '</div>' : '');
       if (s.p && s.p.length) h += '<div class="prose">' + s.p.map((p) => '<p>' + esc(p) + '</p>').join('') + '</div>';
       if (s.sub && s.sub.length) h += s.sub.map((b) =>
         '<h5 class="sub-h5">' + esc(b.h) + '</h5>' +
@@ -548,9 +554,8 @@ function lessonSections(l) {
   if (l.mistakes && l.mistakes.length)
     secs.push(['mistakes', 'أخطاء شائعة', 'x', l.mistakes.map((m) => '<div class="mist-card"><div class="m-row bad"><span class="m-badge">✗</span> ' + frTxt(m.wrong) + '</div>' +
       '<div class="m-row good"><span class="m-badge">✓</span> ' + frTxt(m.right) + '</div><div class="m-why">' + esc(m.why) + '</div></div>').join('')]);
-  if (l.dialogues && l.dialogues.length)
-    secs.push(['dialogues', 'حوارات', 'chat', l.dialogues.map((d) => '<div class="dlg-card"><h4>' + esc(d.title) + '</h4>' + (d.ctx ? '<p class="dlg-ctx">' + esc(d.ctx) + '</p>' : '') +
-      '<div class="dlg-lines">' + d.lines.map((ln) => '<div class="dlg-line"><b class="dlg-who">' + esc(ln.who) + '</b><div class="dlg-body">' + frTxt(ln.fr) + '<button class="speak-btn" data-speak="' + esc(ln.fr) + '">' + ic('volume', 12) + '</button><small>' + esc(ln.ar) + '</small></div></div>').join('') + '</div></div>').join('')]);
+  if (l.dialogues && l.dialogues.length && !l.dialoguesAfterObjectives)
+    secs.push(dialoguesSec(l));
   if (l.homework || (l.sources && l.sources.length)) {
     let h = '';
     if (l.homework) h += '<div class="hw-card"><h4>' + ic('edit', 14) + ' واجب الدرس</h4><p>' + esc(l.homework) + '</p></div>';
@@ -1107,7 +1112,9 @@ document.addEventListener('click', (e) => {
   const vpPlay = e.target.closest('.vp-play');
   if (vpPlay) {
     const wrap2 = vpPlay.closest('.video-player');
-    if (!navigator.onLine) { toast('الفيديو يتطلب اتصالاً بالإنترنت — باقي الدرس يعمل دون اتصال'); return; }
+    // السماح بتشغيل الفيديو مباشرة عبر الإنترنت دون حظر
+    if (wrap2) vpInject(wrap2, true);
+    return;
     if (wrap2) vpInject(wrap2, true);
     return;
   }

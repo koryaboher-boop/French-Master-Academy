@@ -1,22 +1,48 @@
 @echo off
-title French Master Academy - Static App
+chcp 65001 >nul 2>nul
+title French Master Academy - خادم الهوست والمشاركة المحلية
 cd /d "%~dp0"
 
-echo ================================================
-echo   French Master Academy - akadamiyat itqan
-echo ================================================
+echo ================================================================
+echo    🚀 أكاديمية إتقان الفرنسية — French Master Academy
+echo    تشغيل الخادم المحلي وخادم الهوست والمشاركة (Wi-Fi / Hotspot)
+echo ================================================================
 echo.
 
+:: التحقق من وجود Node.js
 where node >nul 2>nul
-if %errorlevel%==0 goto :run
+if %errorlevel% neq 0 (
+    echo [!] لم يتم العثور على Node.js في النظام.
+    echo     جاري فتح التطبيق مباشرة في المتصفح عبر index.html...
+    echo     (يعمل التطبيق بكامل طاقته هكذا، ويلزم Node.js لمشاركة الشبكة والهوت سبوت).
+    echo.
+    start "" "%~dp0index.html"
+    exit /b 0
+)
 
-echo [i] Node.js not found - opening index.html directly in your browser...
-echo     (The app works fully this way! Node is only needed for the Wi-Fi/hotspot feature.)
-start "" "%~dp0index.html"
-exit /b
+echo [✓] تم التحقق من Node.js بنجاح.
 
-:run
-echo Starting local server... your browser will open automatically.
-echo To share with phones on the same Wi-Fi, use the hotspot URL shown in the window.
-node server.js
+:: فحص الاتصال بالإنترنت
+echo [i] جاري فحص الاتصال بالإنترنت...
+ping -n 1 -w 1500 8.8.8.8 >nul 2>nul
+if %errorlevel% equ 0 (
+    echo [✓] الاتصال بالإنترنت نشط: مشغلات يوتيوب والميزات التفاعلية متاحة وتعمل بالكامل.
+) else (
+    echo [!] تنبيه: لا يوجد اتصال نشط بالإنترنت (سيعمل التطبيق محلياً في وضع دون إنترنت).
+)
+echo.
+
+echo [i] جاري تشغيل خادم الويب المحلي ومشاركة الهوت سبوت...
+echo     سيتم فتح المتصفح تلقائياً عند جاهزية الخادم.
+echo.
+echo     لمشاركة التطبيق مع الهواتف والأجهزة الأخرى:
+echo     اتصل بنفس شبكة الواي فاي أو الهوت سبوت، وافتح الرابط المعروض أدناه.
+echo.
+echo ================================================================
+echo.
+
+node "%~dp0server.js"
+
+echo.
+echo تم إيقاف الخادم. شكراً لاستخدامك أكاديمية إتقان الفرنسية!
 pause

@@ -7,6 +7,8 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const dns = require('dns');
+const https = require('https');
 const { exec } = require('child_process');
 
 const APP_DIR = __dirname;
@@ -73,6 +75,20 @@ function createServer(port) {
       return;
     }
 
+    
+    // فحص الاتصال بالإنترنت عبر الخادم
+    if (decodedUrl === '/api/online-status') {
+      dns.lookup('youtube.com', (err) => {
+        const isOnline = !err;
+        res.writeHead(200, {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Access-Control-Allow-Origin': '*',
+          'Cache-Control': 'no-cache'
+        });
+        res.end(JSON.stringify({ online: isOnline, timestamp: new Date().toISOString() }));
+      });
+      return;
+    }
     fs.stat(filePath, (err, stats) => {
       if (err) {
         // SPA fallback
@@ -124,25 +140,38 @@ function createServer(port) {
   server.listen(port, '0.0.0.0', () => {
     const localUrl = `http://localhost:${port}`;
     const netAddrs = getNetworkAddresses();
-    if (!isSilent) {
-      console.log('\n' + '='.repeat(66));
-      console.log('   🚀  أكاديمية إتقان الفرنسية — تعمل الآن على جهازك (V1.0)');
-      console.log('='.repeat(66));
-      console.log('   📌 المحتوى: 6 مستويات (A0→C1) · 61 مساراً · 261 درساً · 837 فيديو موثّق');
-      console.log('   📝 2088 تمرينًا تفاعليًا · 3286 مفردة وبطاقة مع مراجعة ذكية');
-      console.log('-'.repeat(66));
-      console.log(`\n   💻 [1] رابط هذا الجهاز:\n       👉  ${localUrl}\n`);
-      if (netAddrs.length > 0) {
-        console.log('   📱 [2] رابط الهوت سبوت / الواي فاي (للهواتف المتصلة بنفس الشبكة):');
-        for (const item of netAddrs) console.log(`       👉  http://${item.ip}:${port}   [${item.iface}]`);
-        console.log('\n   💡 افتح الرابط من أي هاتف متصل بنفس الشبكة!');
+    
+    // فحص الاتصال بالإنترنت
+    dns.lookup('google.com', (dnsErr) => {
+      const isOnline = !dnsErr;
+      if (!isSilent) {
+        console.log('\n' + '='.repeat(68));
+        console.log('   🚀  أكاديمية إتقان الفرنسية — French Master Academy (Host Server)');
+        console.log('='.repeat(68));
+        console.log('   📌 المحتوى: 6 مستويات (A0→C1) · 61 مساراً · 262 درساً · 829 فيديو موثّق');
+        console.log('   📝 2380 تمرينًا تفاعليًا · 3664 مفردة وبطاقة تعليمية مع مراجعة ذكية');
+        console.log('-'.repeat(68));
+        if (isOnline) {
+          console.log('   🌐 [✓] حالة الاتصال بالإنترنت: مُتصل بنجاح');
+          console.log('       فيديوهات يوتيوب والمشغلات التفاعلية جاهزة للتشغيل المباشر.');
+        } else {
+          console.log('   ⚠️  [!] حالة الاتصال بالإنترنت: غير متصل (Offline Mode)');
+          console.log('       التطبيق يعمل محلياً بالكامل؛ الفيديوهات تتطلب اتصالاً بالإنترنت.');
+        }
+        console.log('-'.repeat(68));
+        console.log(`   💻 [1] رابط التشغيل المحلي على هذا الجهاز:\n       👉  ${localUrl}\n`);
+        if (netAddrs.length > 0) {
+          console.log('   📱 [2] رابط الهوت سبوت / الواي فاي (للهواتف والأجهزة المتصلة بنفس الشبكة):');
+          for (const item of netAddrs) {
+            console.log(`       👉  http://${item.ip}:${port}   [${item.iface}]`);
+          }
+          console.log('\n   💡 يمكنك فتح هذا الرابط من أي هاتف متصل بنفس شبكة الواي فاي أو الهوت سبوت!');
+        }
+        console.log('\n   اضغط [Ctrl + C] لإيقاف السيرفر في أي وقت.');
+        console.log('='.repeat(68) + '\n');
       }
-      console.log('\n   📴 ملاحظة: الفيديوهات التعليمية مدمجة من يوتيوب وتحتاج إنترنت،');
-      console.log('      وباقي التطبيق كله (الدروس والتمارين والمراجعة) يعمل دون إنترنت.');
-      console.log('\n   اضغط [Ctrl + C] لإيقاف السيرفر في أي وقت.');
-      console.log('='.repeat(66) + '\n');
-    }
-    openBrowser(localUrl);
+      openBrowser(localUrl);
+    });
   });
 }
 
